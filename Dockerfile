@@ -12,6 +12,7 @@ RUN apt update && apt install -y \
     bash \
     sudo \
     git \
+    vim \
     dosfstools \
     build-essential \
     pkg-config \
@@ -22,8 +23,18 @@ RUN apt update && apt install -y \
     rm -rf /var/lib/apt/lists/*
 
 # 安装 Rust 和 cargo-binutils
+ENV RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static \
+    RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
+
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 ENV PATH="/root/.cargo/bin:${PATH}"
+
+RUN echo "[source.crates-io]" > /root/.cargo/config.toml && \
+    echo "replace-with = 'ustc'" >> /root/.cargo/config.toml && \
+    echo "\n" >> /root/.cargo/config.toml && \
+    echo "[source.ustc]" >> /root/.cargo/config.toml && \
+    echo "registry = 'sparse+https://mirrors.ustc.edu.cn/crates.io-index/'" >> /root/.cargo/config.toml
+
 RUN cargo install cargo-binutils
 
 # 安装 musl toolchains
