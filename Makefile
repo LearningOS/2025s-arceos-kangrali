@@ -15,7 +15,7 @@ remove:
 	docker rm -f ${CONTAINER_NAME}
 
 new_docker:
-	docker run -itd -v ${PWD}:/mnt -w /mnt --name ${CONTAINER_NAME} ${DOCKER_NAME} bash
+	docker run -itd --privileged=true -v ${PWD}:/mnt -w /mnt --name ${CONTAINER_NAME} ${DOCKER_NAME} bash
 
 build_docker: 
 	docker build -t ${DOCKER_NAME} .

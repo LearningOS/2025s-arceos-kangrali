@@ -166,7 +166,7 @@ else ifeq ($(PLATFORM_NAME), aarch64-bsta1000b)
   include scripts/make/bsta1000b-fada.mk
 endif
 
-build: pflash_img $(OUT_DIR) $(OUT_BIN)
+build: $(OUT_DIR) $(OUT_BIN)
 
 disasm:
 	$(OBJDUMP) $(OUT_ELF) | less
