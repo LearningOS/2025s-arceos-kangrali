@@ -49,13 +49,21 @@
 #![cfg_attr(all(not(test), not(doc)), no_std)]
 #![feature(doc_cfg)]
 #![feature(doc_auto_cfg)]
+#![cfg_attr(feature = "alloc", feature(hashmap_internals), feature(hasher_prefixfree_extras), feature(try_reserve_kind), feature(extend_one))]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
 #[cfg(feature = "alloc")]
 #[doc(no_inline)]
-pub use alloc::{boxed, collections, format, string, vec};
+pub use alloc::{boxed, format, string, vec};
+
+#[cfg(feature = "alloc")]
+pub mod collections {
+    #[doc(no_inline)]
+    pub use alloc::collections::*;
+    pub use crate::hash::map::*;
+}
 
 #[doc(no_inline)]
 pub use core::{arch, cell, cmp, hint, marker, mem, ops, ptr, slice, str};
@@ -75,3 +83,6 @@ pub mod time;
 pub mod fs;
 #[cfg(feature = "net")]
 pub mod net;
+
+#[cfg(feature = "alloc")]
+pub mod hash;
