@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-axstd = { workspace = true, features = ["alloc"], optional = true }
+axstd = { workspace = true, features = ["alloc", "hashmap"], optional = true }
 
 [features]
 default = ["axstd"]

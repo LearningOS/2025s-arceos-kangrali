@@ -29,7 +29,7 @@ fp_simd = ["axfeat/fp_simd"]
 irq = ["arceos_api/irq", "axfeat/irq"]
 
 # Memory
-alloc = ["arceos_api/alloc", "axfeat/alloc", "axio/alloc", "hashmap"]
+alloc = ["arceos_api/alloc", "axfeat/alloc", "axio/alloc"]
 alloc-tlsf = ["axfeat/alloc-tlsf"]
 alloc-slab = ["axfeat/alloc-slab"]
 alloc-buddy = ["axfeat/alloc-buddy"]
