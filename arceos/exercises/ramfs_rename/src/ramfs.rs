@@ -1,8 +1,8 @@
 extern crate alloc;
 
 use alloc::sync::Arc;
-use axfs_ramfs::RamFileSystem;
-use axfs_vfs::VfsOps;
+use axfs_ramfs::{DirNode, RamFileSystem};
+use axfs_vfs::{VfsOps, VfsNodeOps, VfsError};
 use std::os::arceos::api::fs::{AxDisk, MyFileSystemIf};
 
 struct MyFileSystemIfImpl;

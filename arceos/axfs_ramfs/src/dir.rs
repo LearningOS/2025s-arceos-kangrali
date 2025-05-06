@@ -1,4 +1,5 @@
 use alloc::collections::BTreeMap;
+use alloc::string::ToString;
 use alloc::sync::{Arc, Weak};
 use alloc::{string::String, vec::Vec};
 
@@ -65,6 +66,22 @@ impl DirNode {
             }
         }
         children.remove(name);
+        Ok(())
+    }
+
+    /// Renames a node by the given name in this directory.
+    pub fn rename_node(&self, old_name: &str, new_name: &str) -> VfsResult {
+        let mut children = self.children.write();
+        if children.contains_key(new_name) {
+            return Err(VfsError::AlreadyExists);
+        }
+        let key = new_name.rfind('/').map_or(new_name, |n| &new_name[n + 1..]);
+        log::debug!("rename {} to {} {}", old_name, new_name, key);
+        if let Some(v) = children.remove(old_name) {
+            children.insert(key.to_string(), v);
+        } else {
+            return Err(VfsError::NotFound);
+        }
         Ok(())
     }
 }
@@ -162,6 +179,26 @@ impl VfsNodeOps for DirNode {
             Err(VfsError::InvalidInput) // remove '.' or '..
         } else {
             self.remove_node(name)
+        }
+    }
+
+    fn rename(&self, _src_path: &str, _dst_path: &str) -> VfsResult {
+        log::debug!("rename at ramfs: {} {}", _src_path, _dst_path);
+        let (name, rest) = split_path(_src_path);
+        if let Some(rest) = rest {
+            match name {
+            "" | "." => self.rename(rest, _dst_path),
+            ".." => self.parent().ok_or(VfsError::NotFound)?.rename(rest, _dst_path),
+            _ => self
+                .children
+                .read()
+                .get(name)
+                .ok_or(VfsError::NotFound)?.clone().rename(rest, _dst_path)
+            }
+        } else if name.is_empty() || name == "." || name == ".." {
+            Err(VfsError::InvalidInput) // rename '.' or '..'
+        } else {
+            self.rename_node(name, _dst_path)
         }
     }
 
