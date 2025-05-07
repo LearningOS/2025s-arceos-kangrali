@@ -5,9 +5,11 @@ use axhal::arch::TrapFrame;
 use axhal::trap::{register_trap_handler, SYSCALL};
 use axerrno::LinuxError;
 use axtask::current;
+use axhal::mem::{PAGE_SIZE_4K, phys_to_virt};
 use axtask::TaskExtRef;
 use axhal::paging::MappingFlags;
 use arceos_posix_api as api;
+use memory_addr::addr_range;
 
 const SYS_IOCTL: usize = 29;
 const SYS_OPENAT: usize = 56;
@@ -140,7 +142,42 @@ fn sys_mmap(
     fd: i32,
     _offset: isize,
 ) -> isize {
-    unimplemented!("no sys_mmap!");
+    if length > 512 {
+        return -1;
+    }
+    let mut buf: [u8; 512] = [0; 512];
+    let buf_addr = &mut buf as *mut u8 as usize as *mut c_void;
+    api::sys_lseek(fd, _offset as i64, 0);
+    api::sys_read(fd, buf_addr, length);
+    let cur = current();
+    let page_num = (length + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K;
+    let mut uspace = cur.task_ext().aspace.lock();
+    let mut pos = addr as usize;
+    if addr.is_null() {
+        if let Some(va) = uspace.find_free_area(uspace.base(), length, addr_range!(uspace.base()..uspace.end())) {
+            pos = va.into();
+        } else {
+            ax_println!("not enough memory");
+            return -1;
+        }
+    }
+    uspace.map_alloc(pos.into(), PAGE_SIZE_4K * page_num, MappingFlags::READ|MappingFlags::WRITE|MappingFlags::EXECUTE|MappingFlags::USER, true).unwrap();
+    let (paddr, _, _) = uspace
+        .page_table()
+        .query(pos.into())
+        .unwrap_or_else(|_| panic!("Mapping failed for segment: {:#x}", pos));
+
+    ax_println!("paddr: {:#x} vaddr: {:#x}", paddr, pos);
+
+    unsafe {
+        core::ptr::copy_nonoverlapping(
+            buf.as_ptr(),
+            phys_to_virt(paddr).as_mut_ptr(),
+            PAGE_SIZE_4K * page_num,
+        );
+    }
+    pos as isize
+
 }
 
 fn sys_openat(dfd: c_int, fname: *const c_char, flags: c_int, mode: api::ctypes::mode_t) -> isize {
